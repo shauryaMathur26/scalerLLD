@@ -23,24 +23,23 @@ public class GameController {
     }
 
     public void displayBoard(Game game){
-        game.getBoard().printBoard();
+        game.printBoard();
     }
 
     public void makeMove(Game game){
-        // Make a move on that game's board
-
+        game.makeMove();
     }
 
     public GameState checkState(Game game){
-        return game.
+        return game.getGameState();
     }
 
     public Player getWinner(Game game){
         return game.getWinner();
     }
 
-    public void undo(){
-
+    public void undo(Game game){
+        game.handleUndo();
     }
 
 
@@ -53,7 +52,6 @@ public class GameController {
     // Check game state and :
         // If draw -> handle draw
         // If winner -> display winner
-    // Handle pause
 
     // Handle Undo
 

@@ -1,5 +1,6 @@
 package tictactoe.models;
 
+import tictactoe.enums.CellState;
 import tictactoe.enums.GameState;
 import tictactoe.enums.PlayerType;
 import tictactoe.exceptions.DuplicateSymbolException;
@@ -125,5 +126,100 @@ public class Game {
 
     public GameState getGameState() {
         return gameState;
+    }
+
+    public void printBoard(){
+        board.printBoard();
+    }
+
+    public void makeMove(){
+
+        //Find current player
+        Player currentMovePlayer = players.get(nextMovePlayerIndex);
+        System.out.println("It is " + currentMovePlayer.getName() + "'s move");
+
+        //Make move
+        Move move = currentMovePlayer.makeMove(board);
+
+        if(!validateMove(move)){
+            System.out.println("Invalid move! Please try again");
+            return;
+        }
+
+        int row = move.getCell().getRow();
+        int col = move.getCell().getCol();
+
+        Cell cellToBeUpdated = board.getGrid().get(row).get(col);
+        cellToBeUpdated.setPlayer(currentMovePlayer);
+        cellToBeUpdated.setCellState(CellState.FILLED);
+
+        //Add it to the moves list (Undo)
+        Move finalMoveObject = new Move(cellToBeUpdated,currentMovePlayer);
+        moves.add(finalMoveObject);
+
+        // update nextMovePlayerIndex
+        nextMovePlayerIndex += 1;
+        nextMovePlayerIndex %= players.size(); // To handle circular nature of turns
+
+        //update cell and board
+        //check Winner and update game state
+
+        if(checkWinner(board,finalMoveObject)){
+           //Winner
+            gameState = GameState.WON;
+            winner = currentMovePlayer;
+        }else if(moves.size() == board.getSize()* board.getSize()){
+            //Draw
+            gameState = GameState.DRAW;
+        }
+
+    }
+
+    private boolean checkWinner(Board board, Move move){
+
+        for(WinningStrategy winningStrategy : winningStrategies){
+            if(winningStrategy.checkWinner(board,move)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean validateMove(Move move){
+        int row = move.getCell().getRow();
+        int col = move.getCell().getCol();
+
+        if(row >= board.getSize() || col >= board.getSize()){
+            return false;
+        }
+
+        if(board.getGrid().get(row).get(col).getCellState().equals(CellState.EMPTY))
+            return true;
+        return false;
+    }
+
+    public void handleUndo(){
+        //One move must be there
+        if(moves.isEmpty()){
+            System.out.println("No moves to UNDO");
+            return;
+        }
+        // Get and remove last move
+        Move move = moves.get(moves.size()-1);
+        moves.remove(move);
+
+        // Update cell state
+        Cell cell = move.getCell();
+        cell.setCellState(CellState.EMPTY);
+        cell.setPlayer(null);
+
+        // update nextPlayerIndex
+        nextMovePlayerIndex -= 1;
+        nextMovePlayerIndex = (nextMovePlayerIndex + players.size())% players.size();
+
+        // Revert Winning Strategy maps
+        for(WinningStrategy winningStrategy : winningStrategies){
+            winningStrategy.handleUndo(board,move);
+        }
     }
 }
