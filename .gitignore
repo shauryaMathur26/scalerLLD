@@ -1,0 +1,5 @@
+
+/tutorials/.gradle
+/tutorials/build/classes
+/tutorials/build
+*.class
